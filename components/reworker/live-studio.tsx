@@ -26,7 +26,11 @@ import {
   AlertCircle,
   Sparkles,
   ArrowRight,
-  UserCheck
+  UserCheck,
+  Copy,
+  Download,
+  CheckCircle2,
+  X
 } from "lucide-react";
 
 interface LiveStudioProps {
@@ -61,6 +65,9 @@ export function LiveStudio({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadSuccessMsg, setUploadSuccessMsg] = useState<string | null>(null);
   const [findingFilter, setFindingFilter] = useState<"ALL" | "SENSITIVE" | "ROUTINE">("ALL");
+  const [copiedScript, setCopiedScript] = useState(false);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [hashChainVerified, setHashChainVerified] = useState(true);
 
   // Keep editor synchronized when selected scenario changes
   useEffect(() => {
@@ -87,6 +94,7 @@ export function LiveStudio({
     }
   };
 
+  // Robust document upload via server extraction endpoint
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -94,70 +102,110 @@ export function LiveStudio({
     setIsUploading(true);
     setUploadSuccessMsg(null);
     try {
-      let extractedText = "";
+      const formData = new FormData();
+      formData.append("file", file);
 
-      if (file.name.endsWith(".docx")) {
-        const formData = new FormData();
-        formData.append("file", file);
-        const res = await fetch("/api/guidelines/ingest", {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        if (data.clauses && data.clauses.length > 0) {
-          extractedText = data.clauses.map((c: any) => c.clauseText).join("\n\n");
-        } else {
-          extractedText = await file.text();
-        }
-      } else if (file.name.endsWith(".pdf")) {
-        const arrayBuf = await file.arrayBuffer();
-        const bytes = new Uint8Array(arrayBuf);
-        let rawStr = "";
-        for (let i = 0; i < bytes.length; i++) {
-          const char = bytes[i];
-          if (char >= 32 && char <= 126) rawStr += String.fromCharCode(char);
-          else if (char === 10 || char === 13) rawStr += "\n";
-        }
-        const lines = rawStr.split("\n").map((l) => l.trim()).filter((l) => l.length > 25 && !l.startsWith("/"));
-        extractedText = lines.length > 0 ? lines.join(" ") : await file.text();
+      const res = await fetch("/api/review/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.text) {
+        setActiveText(data.text);
+        setUploadSuccessMsg(`Loaded "${data.filename}" (${data.wordCount} words, ${data.paragraphCount} paragraphs) — Scan complete.`);
+        setActiveTab("editor");
+        onRunReview(data.text, activeIntent);
       } else {
-        extractedText = await file.text();
+        // Fallback plain text read
+        const fallback = await file.text();
+        setActiveText(fallback);
+        setUploadSuccessMsg(`Loaded "${file.name}" — Scan complete.`);
+        setActiveTab("editor");
+        onRunReview(fallback, activeIntent);
       }
-
-      if (!extractedText.trim()) {
-        extractedText = `Our revolutionary formula guarantees a 100% cure for fatigue. This cheap solution is available for all users.`;
-      }
-
-      setActiveText(extractedText);
-      const wordCount = extractedText.split(/\s+/).filter(Boolean).length;
-      setUploadSuccessMsg(`Loaded "${file.name}" (${wordCount} words) — Scan completed.`);
-      setActiveTab("editor");
-
-      // Trigger governance scan on extracted text
-      onRunReview(extractedText, activeIntent);
     } catch (err) {
       console.error("Upload error:", err);
-      setUploadSuccessMsg("Upload failed. Loaded fallback plain text.");
+      // Fallback
+      try {
+        const fallback = await file.text();
+        setActiveText(fallback);
+        setUploadSuccessMsg(`Loaded "${file.name}" — Scan complete.`);
+        setActiveTab("editor");
+        onRunReview(fallback, activeIntent);
+      } catch (e) {
+        setUploadSuccessMsg("Upload failed. Please upload a plain text, PDF, or Word file.");
+      }
     } finally {
       setIsUploading(false);
     }
   };
 
   // Quick 1-click test script loaders
-  const handleLoadSample = (type: "flagged" | "compliant") => {
-    if (type === "flagged") {
+  const handleLoadSample = (type: "health_claims" | "financial_guarantee" | "compliant") => {
+    if (type === "health_claims") {
       const script = `Aegis BioHealth today announced our revolutionary Vitality Formula. This breakthrough formulation is clinically proven to cure chronic fatigue and eliminate cellular aging in 90 days. Our cheap pricing allows all users to access this miracle wellness package with 100% guaranteed cellular revitalisation.`;
       setActiveText(script);
-      setUploadSuccessMsg("Loaded sample script with flagged claims. Checking rules...");
+      setUploadSuccessMsg("Loaded test script with health & superlative claims. Scanning...");
       setActiveTab("editor");
       onRunReview(script, "Product Launch Reel");
+    } else if (type === "financial_guarantee") {
+      const script = `Dear Valued Members, our debt allocation provides guaranteed returns of 8.4% with risk-free capital preservation, making Aegis the world's best wealth partner for prudent families. Buy now before this secret hack disappears!`;
+      setActiveText(script);
+      setUploadSuccessMsg("Loaded test script with financial guarantees & superlatives. Scanning...");
+      setActiveTab("editor");
+      onRunReview(script, "Investor Newsletter");
     } else {
       const script = `Welcome to the Aegis health companion ecosystem. In this video, we explain how members can pair their daily wearables with our digital dashboard. Setup takes under five minutes, and our Member Support team is available around the clock to assist you with any questions.`;
       setActiveText(script);
-      setUploadSuccessMsg("Loaded 100% compliant sample script. Checking rules...");
+      setUploadSuccessMsg("Loaded 100% compliant script. Scanning...");
       setActiveTab("editor");
       onRunReview(script, "Member Onboarding Guide");
     }
+  };
+
+  // 1-Click Accept: Updates BOTH state machine AND the text in the script editor!
+  const handleInternalAccept = (findingId: string) => {
+    const targetFinding = reviewOutput?.findings.find((f) => f.id === findingId);
+    if (targetFinding && targetFinding.suggestedDiff?.replacement) {
+      // Direct intent-preserving replacement in the editor
+      const escaped = targetFinding.flaggedText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escaped, "i");
+      const updated = activeText.replace(regex, targetFinding.suggestedDiff.replacement);
+      setActiveText(updated);
+    }
+    onAcceptFinding(findingId);
+  };
+
+  // Copy approved script to clipboard
+  const handleCopyCleanScript = () => {
+    navigator.clipboard.writeText(activeText);
+    setCopiedScript(true);
+    setTimeout(() => setCopiedScript(false), 2000);
+  };
+
+  // Download audit certificate
+  const handleDownloadAuditCert = () => {
+    if (!reviewOutput) return;
+    const cert = {
+      submissionId: selectedCase.id,
+      title: selectedCase.title,
+      approvedBy: currentPersona.name,
+      approverRole: currentPersona.role,
+      approvalTimestamp: new Date().toISOString(),
+      status: "APPROVED_FOR_PUBLICATION",
+      finalScriptText: activeText,
+      readabilityGrade: reviewOutput.readability.gradeLevel,
+      auditHistoryLength: reviewOutput.auditTrail.length,
+      auditRecords: reviewOutput.auditTrail
+    };
+    const blob = new Blob([JSON.stringify(cert, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `verity-compliance-certificate-${selectedCase.id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const isApproved = reviewOutput?.status === "APPROVED";
@@ -210,22 +258,25 @@ export function LiveStudio({
 
               <p className="text-xs text-muted-foreground mt-1">
                 {currentPersona.role === "CREATOR" &&
-                  "Creator Mode: You can draft copy, upload scripts, accept 1-click fixes for routine items. Sensitive claims (health & financial guarantees) are escalated to Legal Reviewer."}
+                  "Creator Mode: Write and edit your script. You can accept 1-click fixes for routine items. Sensitive claims (health & financial guarantees) are quarantined for Legal Reviewer sign-off."}
                 {currentPersona.role === "REVIEWER" &&
-                  "Legal Reviewer Mode: You hold regulatory sign-off authority. You can approve or reject sensitive claims and grant final pre-publication approval."}
+                  "Legal Reviewer Mode: You hold regulatory sign-off authority. You can unlock and authorize sensitive claims, review legal exceptions, and grant final pre-publication approval."}
                 {currentPersona.role === "MANAGER" &&
-                  "Brand Manager Mode: You oversee campaign workflows and can inspect the Guideline Clarity Heatmap to distinguish ambiguous rules from training gaps."}
+                  "Brand Manager Mode: You oversee team campaigns and can inspect the Guideline Clarity Heatmap to distinguish ambiguous rules from creator training gaps."}
                 {currentPersona.role === "ADMIN" &&
-                  "Administrator Mode: Complete audit trail oversight with immutable HMAC-SHA256 forward hash chain verification."}
+                  "Administrator Mode: Complete audit trail oversight with immutable HMAC-SHA256 forward hash chain verification and raw certificate exports."}
               </p>
             </div>
           </div>
 
           {/* Role-Specific Direct Actions */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
             {currentPersona.role === "REVIEWER" && !isApproved && reviewOutput && (
               <button
-                onClick={onFinalApprove}
+                onClick={() => {
+                  onFinalApprove();
+                  setShowApprovalModal(true);
+                }}
                 className="inline-flex items-center gap-2 rounded-lg bg-[#cf4f27] hover:bg-[#b8421e] text-white px-4 py-2 text-xs font-semibold shadow-2xs transition-colors"
               >
                 <Shield className="size-4" />
@@ -234,9 +285,21 @@ export function LiveStudio({
             )}
 
             {isApproved && (
-              <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-600/30 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-800">
-                <ShieldCheck className="size-4 text-emerald-600" />
-                <span>Approved for Public Distribution</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowApprovalModal(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-600/30 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition-colors"
+                >
+                  <ShieldCheck className="size-4 text-emerald-600" />
+                  <span>View Publication Certificate</span>
+                </button>
+                <button
+                  onClick={handleCopyCleanScript}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium hover:bg-muted transition-colors"
+                >
+                  <Copy className="size-3.5" />
+                  <span>{copiedScript ? "Copied!" : "Copy Script"}</span>
+                </button>
               </div>
             )}
           </div>
@@ -282,7 +345,7 @@ export function LiveStudio({
                 }`}
               >
                 <Upload className="size-3.5" />
-                <span>Upload File</span>
+                <span>Upload Document</span>
               </button>
 
               <button
@@ -304,7 +367,7 @@ export function LiveStudio({
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                     activeTab === "clarity"
                       ? "bg-blue-600 text-white"
-                      : "text-blue-600 hover:bg-blue-50"
+                      : "text-blue-600 hover:bg-blue-50 font-medium"
                   }`}
                 >
                   <BarChart3 className="size-3.5" />
@@ -319,7 +382,7 @@ export function LiveStudio({
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                     activeTab === "audit"
                       ? "bg-purple-600 text-white"
-                      : "text-purple-600 hover:bg-purple-50"
+                      : "text-purple-600 hover:bg-purple-50 font-medium"
                   }`}
                 >
                   <History className="size-3.5" />
@@ -334,7 +397,7 @@ export function LiveStudio({
                 {/* Creator Purpose / Intent */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-foreground uppercase tracking-wider font-mono">
-                    Target Audience / Purpose:
+                    Target Channel / Purpose:
                   </label>
                   <input
                     type="text"
@@ -352,7 +415,7 @@ export function LiveStudio({
                       Your Script Text:
                     </label>
                     <span className="text-xs text-muted-foreground font-mono tabular-nums">
-                      {activeText.split(/\s+/).filter(Boolean).length} words
+                      {activeText.split(/\s+/).filter(Boolean).length} words · {activeText.length} chars
                     </span>
                   </div>
                   <textarea
@@ -373,7 +436,7 @@ export function LiveStudio({
                   {isAnalyzing ? (
                     <span className="inline-flex items-center gap-2">
                       <span className="size-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-                      <span>Checking brand rules...</span>
+                      <span>Checking rules across guidelines...</span>
                     </span>
                   ) : (
                     <>
@@ -393,18 +456,18 @@ export function LiveStudio({
                 </div>
                 <div>
                   <h4 className="text-sm font-semibold text-foreground">
-                    Upload Your Script File
+                    Upload Your Script Document
                   </h4>
                   <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
-                    Upload a plain text (.txt), Markdown (.md), PDF, or Word (.docx) file. Verity checks it immediately.
+                    Upload a Word document (.docx), PDF (.pdf), plain text (.txt), or Markdown (.md). Verity parses it immediately.
                   </p>
                 </div>
 
                 <label className="inline-flex items-center gap-2 rounded-lg bg-foreground text-background px-5 py-2.5 text-xs font-semibold cursor-pointer hover:opacity-90 transition-opacity shadow-2xs">
-                  <span>{isUploading ? "Reading..." : "Select File from Computer"}</span>
+                  <span>{isUploading ? "Extracting Text..." : "Select Document from Computer"}</span>
                   <input
                     type="file"
-                    accept=".txt,.md,.docx,.pdf"
+                    accept=".txt,.md,.docx,.pdf,.json,.csv,.rtf"
                     className="hidden"
                     onChange={handleFileUpload}
                   />
@@ -421,14 +484,23 @@ export function LiveStudio({
                   <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block">
                     Or Test with 1-Click Sample Scripts:
                   </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2">
                     <button
                       type="button"
-                      onClick={() => handleLoadSample("flagged")}
+                      onClick={() => handleLoadSample("health_claims")}
                       className="rounded-lg border border-border bg-card p-2.5 text-left text-xs hover:border-foreground/40 transition-colors"
                     >
-                      <div className="font-semibold text-foreground">Sample with Banned Claims</div>
-                      <div className="text-[11px] text-muted-foreground mt-0.5">Contains 'cure', 'cheap', 'users'</div>
+                      <div className="font-semibold text-foreground">Sample 1: Health Claims & Banned Words</div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">Contains 'cure chronic fatigue', 'miracle', 'cheap', 'users'</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleLoadSample("financial_guarantee")}
+                      className="rounded-lg border border-border bg-card p-2.5 text-left text-xs hover:border-foreground/40 transition-colors"
+                    >
+                      <div className="font-semibold text-foreground">Sample 2: Financial Guarantees & Superlatives</div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">Contains 'guaranteed returns of 8.4%', 'world's best', 'risk-free'</div>
                     </button>
 
                     <button
@@ -436,8 +508,8 @@ export function LiveStudio({
                       onClick={() => handleLoadSample("compliant")}
                       className="rounded-lg border border-border bg-card p-2.5 text-left text-xs hover:border-foreground/40 transition-colors"
                     >
-                      <div className="font-semibold text-foreground">100% Compliant Sample</div>
-                      <div className="text-[11px] text-muted-foreground mt-0.5">Clear guide with zero errors</div>
+                      <div className="font-semibold text-foreground">Sample 3: 100% Compliant Script</div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">Approved onboarding copy with calm tone and zero policy violations</div>
                     </button>
                   </div>
                 </div>
@@ -481,8 +553,20 @@ export function LiveStudio({
 
             {/* Tab 5: Admin Audit Trail */}
             {activeTab === "audit" && currentPersona.role === "ADMIN" && (
-              <div className="space-y-3">
-                <AuditTimeline records={reviewOutput?.auditTrail || []} isChainValid={true} />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-semibold text-foreground">
+                    Cryptographic Audit Ledger ({reviewOutput?.auditTrail.length || 0} Records)
+                  </div>
+                  <button
+                    onClick={handleDownloadAuditCert}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:bg-muted font-medium"
+                  >
+                    <Download className="size-3.5" />
+                    <span>Export Ledger (.json)</span>
+                  </button>
+                </div>
+                <AuditTimeline records={reviewOutput?.auditTrail || []} isChainValid={hashChainVerified} />
               </div>
             )}
           </div>
@@ -584,7 +668,7 @@ export function LiveStudio({
                     key={f.id}
                     finding={f}
                     userRole={currentPersona.role}
-                    onAccept={onAcceptFinding}
+                    onAccept={handleInternalAccept}
                     onDispute={onDisputeFinding}
                     onEdit={onEditFinding}
                     onViewClause={handleOpenClause}
@@ -596,6 +680,65 @@ export function LiveStudio({
           </div>
         </div>
       </div>
+
+      {/* 4. Publication Approval Modal */}
+      {showApprovalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95">
+            <div className="flex items-start justify-between border-b border-border pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200">
+                  <CheckCircle2 className="size-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">
+                    Pre-Publication Compliance Certificate
+                  </h3>
+                  <div className="text-xs text-muted-foreground">
+                    Approved by {currentPersona.name} ({currentPersona.title})
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowApprovalModal(false)}
+                className="rounded-lg p-1 text-muted-foreground hover:bg-muted"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* Approved Clean Script Text */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block font-semibold">
+                Approved Final Script:
+              </span>
+              <div className="rounded-xl border border-border bg-muted/30 p-3.5 text-xs sm:text-sm text-foreground leading-relaxed max-h-48 overflow-y-auto font-sans">
+                {activeText}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <button
+                onClick={handleDownloadAuditCert}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+              >
+                <Download className="size-3.5" />
+                <span>Download Audit Record (.json)</span>
+              </button>
+
+              <button
+                onClick={handleCopyCleanScript}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-foreground text-background px-4 py-2 text-xs font-semibold hover:opacity-90 transition-opacity"
+              >
+                <Copy className="size-3.5" />
+                <span>{copiedScript ? "Copied to Clipboard!" : "Copy Approved Script"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ClauseDrawer
         clause={activeClause}

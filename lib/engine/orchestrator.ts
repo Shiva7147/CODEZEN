@@ -68,9 +68,19 @@ export async function executeGovernanceReview(
 
   // 4. Combine findings and verify citations (Module 4)
   const combinedRawFindings = [...deterministicResult.findings, ...aiResult.findings];
+  
+  // Deduplicate overlapping findings on the same flagged text
+  const seenKeys = new Set<string>();
+  const dedupedFindings = combinedRawFindings.filter((f) => {
+    const key = `${f.clauseCode}_${f.flaggedText.trim().toLowerCase()}`;
+    if (seenKeys.has(key)) return false;
+    seenKeys.add(key);
+    return true;
+  });
+
   const verifier = new CitationVerifier();
   const verifiedFindings = verifier.verifyAndFilterFindings(
-    combinedRawFindings,
+    dedupedFindings,
     input.rawText,
     CLAUSE_DATABASE_MAP
   );
