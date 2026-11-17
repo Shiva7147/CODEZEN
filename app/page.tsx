@@ -8,9 +8,6 @@ import { CampaignsCombobox } from "@/components/reworker/campaigns-combobox";
 import { ThreeStepMethod } from "@/components/reworker/three-step-method";
 import { LiveStudio } from "@/components/reworker/live-studio";
 import { FaqAccordion } from "@/components/reworker/faq-accordion";
-import { ActivityMatrix } from "@/components/reworker/activity-matrix";
-import { CustomerStories } from "@/components/reworker/customer-stories";
-import { PricingTiers } from "@/components/reworker/pricing-tiers";
 import { FooterWordmark } from "@/components/reworker/footer-wordmark";
 import { PresentationModal } from "@/components/reworker/presentation-modal";
 import { DEMO_PERSONAS, Persona } from "@/components/navigation/top-nav";
@@ -35,12 +32,15 @@ export default function ProductizedApp() {
   const handleRunReview = async (customText?: string, customIntent?: string) => {
     setIsAnalyzing(true);
     try {
+      const textToReview = customText !== undefined ? customText : selectedCase.rawText;
+      const intentToReview = customIntent !== undefined ? customIntent : selectedCase.statedIntent;
+
       const output = await executeGovernanceReview(
         {
           submissionId: selectedCase.id,
           title: selectedCase.title,
-          rawText: customText || selectedCase.rawText,
-          statedIntent: customIntent || selectedCase.statedIntent,
+          rawText: textToReview,
+          statedIntent: intentToReview,
           targetChannel: selectedCase.targetChannel
         },
         stateMachine
@@ -217,14 +217,16 @@ export default function ProductizedApp() {
         onOpenPresentation={() => setIsPresentationOpen(true)}
       />
 
-      {/* 2. Editorial Hero Section */}
+      {/* 2. Editorial Hero Section with Direct Role Switcher */}
       <AsciiHero
+        currentPersona={currentPersona}
+        onSelectPersona={setCurrentPersona}
         onScrollToStudio={scrollToStudio}
         onScrollToMethod={scrollToMethod}
         onOpenPresentation={() => setIsPresentationOpen(true)}
       />
 
-      {/* 3. Real Creator Examples (Scenario 1, Scenario 2, Scenario 3) */}
+      {/* 3. Real Creator Examples */}
       <CampaignsCombobox
         selectedId={selectedCase.id}
         onSelectCampaign={(c) => {
@@ -233,10 +235,10 @@ export default function ProductizedApp() {
         }}
       />
 
-      {/* 4. Three-Step Method Walkthrough */}
+      {/* 4. Three-Step Method Walkthrough (Explains what it does in human language) */}
       <ThreeStepMethod />
 
-      {/* 5. The Core Product: The Live Interactive Studio with Tabs & Assistant */}
+      {/* 5. The Core Product: The Live Interactive Studio with Role Capabilities */}
       <LiveStudio
         currentPersona={currentPersona}
         selectedCase={selectedCase}
@@ -249,19 +251,10 @@ export default function ProductizedApp() {
         onFinalApprove={handleFinalApproval}
       />
 
-      {/* 6. Activity Ledger: 365 Days of Brand Governance */}
-      <ActivityMatrix />
-
-      {/* 7. Real People Case Studies */}
-      <CustomerStories />
-
-      {/* 8. Pricing & Deployment Tiers */}
-      <PricingTiers />
-
-      {/* 9. FAQ Accordion: Governance Architecture & Criteria */}
+      {/* 6. FAQ Accordion: Governance Architecture & Criteria */}
       <FaqAccordion />
 
-      {/* 10. Footer with Closing CTA & Giant Monolithic Wordmark */}
+      {/* 7. Footer with Closing CTA & Giant Monolithic Wordmark */}
       <FooterWordmark onScrollToStudio={scrollToStudio} />
 
       {/* 8. 5-Slide Interactive Presentation Overview Modal */}

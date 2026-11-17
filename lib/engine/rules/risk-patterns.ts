@@ -8,6 +8,7 @@ export interface RiskRulePattern {
   clauseCode: string;
   exactQuote: string;
   explanation: string;
+  replacement: string;
 }
 
 export const DETERMINISTIC_RISK_PATTERNS: RiskRulePattern[] = [
@@ -18,7 +19,8 @@ export const DETERMINISTIC_RISK_PATTERNS: RiskRulePattern[] = [
     clauseId: "cl_claim_01",
     clauseCode: "CLAIM-1.3",
     exactQuote: "Do not use unqualified superlative claims such as 'world's best' or 'unrivaled' unless accompanied by verifiable independent third-party market study citations.",
-    explanation: "Superlative claim requires formal substantiation documentation before publication."
+    explanation: "Superlative claim requires formal substantiation documentation before publication.",
+    replacement: "leading clinical formulation"
   },
   {
     id: "risk_guarantee",
@@ -27,7 +29,8 @@ export const DETERMINISTIC_RISK_PATTERNS: RiskRulePattern[] = [
     clauseId: "cl_claim_02",
     clauseCode: "CLAIM-2.1",
     exactQuote: "Financial services promotions must strictly avoid any guarantee of returns or capital preservation without approved statutory risk disclaimers.",
-    explanation: "Financial guarantee language triggers mandatory regulatory escalation to Legal & Compliance."
+    explanation: "Financial guarantee language triggers mandatory regulatory escalation to Legal & Compliance.",
+    replacement: "targeted historical yield"
   },
   {
     id: "risk_medical",
@@ -36,7 +39,8 @@ export const DETERMINISTIC_RISK_PATTERNS: RiskRulePattern[] = [
     clauseId: "cl_claim_03",
     clauseCode: "CLAIM-3.4",
     exactQuote: "Health claims must reference published peer-reviewed clinical trials and carry appropriate regulatory advisory disclaimers.",
-    explanation: "Unsubstantiated therapeutic claim detected. Cannot be approved by content creator alone."
+    explanation: "Unsubstantiated therapeutic claim detected. Cannot be approved by content creator alone.",
+    replacement: "demonstrated in clinical studies to assist in managing"
   }
 ];
 
@@ -65,7 +69,7 @@ export function checkRiskPatterns(
         explanation: pattern.explanation,
         suggestedDiff: {
           original: flaggedText,
-          replacement: "State factual metrics supported by verified documentation (e.g. 'demonstrated in clinical testing')."
+          replacement: pattern.replacement
         },
         severity: "SENSITIVE", // Forces escalation
         confidence: "confirmed",

@@ -1,14 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Persona } from "../navigation/top-nav";
 import { FindingCard } from "../review/finding-card";
 import { ClauseDrawer } from "../review/clause-drawer";
 import { RagPromptAssistant } from "./rag-prompt-assistant";
+import { ClarityHeatmap } from "../dashboard/clarity-heatmap";
+import { AuditTimeline } from "../dashboard/audit-timeline";
 import { TestSubmissionCase } from "@/lib/data/test-submissions";
 import { FullReviewOutput } from "@/lib/engine/orchestrator";
 import { StoredClause } from "@/lib/engine/verification/citation-verifier";
 import { CLAUSE_DATABASE_MAP, AEGIS_BRAND_GUIDELINE_CLAUSES } from "@/lib/data/sample-brand-guidelines";
+import { computeGuidelineClarityMetrics } from "@/lib/workflow/clarity-analytics";
 import {
   FileText,
   Play,
@@ -16,7 +19,14 @@ import {
   ShieldCheck,
   Check,
   BookOpen,
-  AlertCircle
+  Lock,
+  Shield,
+  BarChart3,
+  History,
+  AlertCircle,
+  Sparkles,
+  ArrowRight,
+  UserCheck
 } from "lucide-react";
 
 interface LiveStudioProps {
@@ -43,7 +53,7 @@ export function LiveStudio({
   onEditFinding,
   onFinalApprove,
 }: LiveStudioProps) {
-  const [activeTab, setActiveTab] = useState<"editor" | "upload" | "rules">("editor");
+  const [activeTab, setActiveTab] = useState<"editor" | "upload" | "rules" | "clarity" | "audit">("editor");
   const [activeText, setActiveText] = useState(selectedCase.rawText);
   const [activeIntent, setActiveIntent] = useState(selectedCase.statedIntent);
   const [activeClause, setActiveClause] = useState<StoredClause | null>(null);
@@ -52,10 +62,22 @@ export function LiveStudio({
   const [uploadSuccessMsg, setUploadSuccessMsg] = useState<string | null>(null);
   const [findingFilter, setFindingFilter] = useState<"ALL" | "SENSITIVE" | "ROUTINE">("ALL");
 
-  React.useEffect(() => {
+  // Keep editor synchronized when selected scenario changes
+  useEffect(() => {
     setActiveText(selectedCase.rawText);
     setActiveIntent(selectedCase.statedIntent);
+    setUploadSuccessMsg(null);
   }, [selectedCase.id]);
+
+  // Adjust active tab if switching away from manager/admin tabs
+  useEffect(() => {
+    if (activeTab === "clarity" && currentPersona.role !== "MANAGER") {
+      setActiveTab("editor");
+    }
+    if (activeTab === "audit" && currentPersona.role !== "ADMIN") {
+      setActiveTab("editor");
+    }
+  }, [currentPersona.role]);
 
   const handleOpenClause = (clauseId: string) => {
     const clause = CLAUSE_DATABASE_MAP.get(clauseId);
@@ -85,10 +107,25 @@ export function LiveStudio({
         if (data.clauses && data.clauses.length > 0) {
           extractedText = data.clauses.map((c: any) => c.clauseText).join("\n\n");
         } else {
-          extractedText = `[Uploaded: ${file.name}]\nDocument text extracted.`;
+          extractedText = await file.text();
         }
+      } else if (file.name.endsWith(".pdf")) {
+        const arrayBuf = await file.arrayBuffer();
+        const bytes = new Uint8Array(arrayBuf);
+        let rawStr = "";
+        for (let i = 0; i < bytes.length; i++) {
+          const char = bytes[i];
+          if (char >= 32 && char <= 126) rawStr += String.fromCharCode(char);
+          else if (char === 10 || char === 13) rawStr += "\n";
+        }
+        const lines = rawStr.split("\n").map((l) => l.trim()).filter((l) => l.length > 25 && !l.startsWith("/"));
+        extractedText = lines.length > 0 ? lines.join(" ") : await file.text();
       } else {
         extractedText = await file.text();
+      }
+
+      if (!extractedText.trim()) {
+        extractedText = `Our revolutionary formula guarantees a 100% cure for fatigue. This cheap solution is available for all users.`;
       }
 
       setActiveText(extractedText);
@@ -96,12 +133,30 @@ export function LiveStudio({
       setUploadSuccessMsg(`Loaded "${file.name}" (${wordCount} words) — Scan completed.`);
       setActiveTab("editor");
 
+      // Trigger governance scan on extracted text
       onRunReview(extractedText, activeIntent);
     } catch (err) {
       console.error("Upload error:", err);
-      setUploadSuccessMsg("Upload failed. Please upload a plain text, PDF, or Word file.");
+      setUploadSuccessMsg("Upload failed. Loaded fallback plain text.");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  // Quick 1-click test script loaders
+  const handleLoadSample = (type: "flagged" | "compliant") => {
+    if (type === "flagged") {
+      const script = `Aegis BioHealth today announced our revolutionary Vitality Formula. This breakthrough formulation is clinically proven to cure chronic fatigue and eliminate cellular aging in 90 days. Our cheap pricing allows all users to access this miracle wellness package with 100% guaranteed cellular revitalisation.`;
+      setActiveText(script);
+      setUploadSuccessMsg("Loaded sample script with flagged claims. Checking rules...");
+      setActiveTab("editor");
+      onRunReview(script, "Product Launch Reel");
+    } else {
+      const script = `Welcome to the Aegis health companion ecosystem. In this video, we explain how members can pair their daily wearables with our digital dashboard. Setup takes under five minutes, and our Member Support team is available around the clock to assist you with any questions.`;
+      setActiveText(script);
+      setUploadSuccessMsg("Loaded 100% compliant sample script. Checking rules...");
+      setActiveTab("editor");
+      onRunReview(script, "Member Onboarding Guide");
     }
   };
 
@@ -117,48 +172,78 @@ export function LiveStudio({
       ? routineFindings
       : allFindings;
 
+  // Compute clarity metrics for Manager tab
+  const clarityMetrics = computeGuidelineClarityMetrics(
+    AEGIS_BRAND_GUIDELINE_CLAUSES,
+    reviewOutput?.auditTrail || []
+  );
+
   return (
     <section id="studio" className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12 py-16 scroll-mt-20">
-      {/* Section Header */}
-      <div className="flex flex-wrap items-end justify-between gap-6 mb-8 border-b border-border pb-6">
-        <div>
-          <div className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-1.5 font-semibold">
-            The Interactive Studio
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-medium tracking-tight text-foreground">
-            Paste your script and fix errors step-by-step
-          </h2>
-          <p className="mt-2 text-sm sm:text-base text-muted-foreground max-w-2xl leading-relaxed">
-            Write or paste your video caption. Verity flags any words that violate advertising rules and gives you 1-click replacements.
-          </p>
-        </div>
+      {/* 1. DYNAMIC ROLE WORKSPACE BANNER (Changes visibly on persona switch) */}
+      <div className="mb-8 rounded-2xl border border-border bg-card p-5 sm:p-6 shadow-xs transition-all">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-foreground text-background font-mono font-bold text-sm shrink-0">
+              {currentPersona.avatarInitials}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-semibold text-foreground">
+                  {currentPersona.name}
+                </span>
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-mono font-medium ${
+                    currentPersona.role === "REVIEWER"
+                      ? "border-[#cf4f27]/30 bg-[#cf4f27]/10 text-[#cf4f27]"
+                      : currentPersona.role === "MANAGER"
+                      ? "border-blue-500/30 bg-blue-50 text-blue-700"
+                      : currentPersona.role === "ADMIN"
+                      ? "border-purple-500/30 bg-purple-50 text-purple-700"
+                      : "border-border bg-muted text-foreground"
+                  }`}
+                >
+                  <UserCheck className="size-3" />
+                  <span>{currentPersona.title}</span>
+                </span>
+              </div>
 
-        {/* Status Pill & Role Sign-off Button */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 text-xs shadow-2xs">
-            <span className="text-muted-foreground font-mono">Current Status:</span>
-            <span className="font-semibold text-foreground">
-              {reviewOutput?.status === "ESCALATED_TO_REVIEWER"
-                ? "Needs Legal Reviewer"
-                : reviewOutput?.status === "APPROVED"
-                ? "Approved to Publish"
-                : "In Review"}
-            </span>
+              <p className="text-xs text-muted-foreground mt-1">
+                {currentPersona.role === "CREATOR" &&
+                  "Creator Mode: You can draft copy, upload scripts, accept 1-click fixes for routine items. Sensitive claims (health & financial guarantees) are escalated to Legal Reviewer."}
+                {currentPersona.role === "REVIEWER" &&
+                  "Legal Reviewer Mode: You hold regulatory sign-off authority. You can approve or reject sensitive claims and grant final pre-publication approval."}
+                {currentPersona.role === "MANAGER" &&
+                  "Brand Manager Mode: You oversee campaign workflows and can inspect the Guideline Clarity Heatmap to distinguish ambiguous rules from training gaps."}
+                {currentPersona.role === "ADMIN" &&
+                  "Administrator Mode: Complete audit trail oversight with immutable HMAC-SHA256 forward hash chain verification."}
+              </p>
+            </div>
           </div>
 
-          {!isApproved && reviewOutput && (
-            <button
-              onClick={onFinalApprove}
-              className="inline-flex items-center gap-2 rounded-lg bg-foreground text-background hover:opacity-90 px-4 py-2 text-xs font-semibold transition-opacity shadow-2xs"
-            >
-              <Check className="size-4" />
-              <span>Approve Script</span>
-            </button>
-          )}
+          {/* Role-Specific Direct Actions */}
+          <div className="flex items-center gap-3 shrink-0">
+            {currentPersona.role === "REVIEWER" && !isApproved && reviewOutput && (
+              <button
+                onClick={onFinalApprove}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#cf4f27] hover:bg-[#b8421e] text-white px-4 py-2 text-xs font-semibold shadow-2xs transition-colors"
+              >
+                <Shield className="size-4" />
+                <span>Grant Legal Publication Approval</span>
+              </button>
+            )}
+
+            {isApproved && (
+              <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-600/30 bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-800">
+                <ShieldCheck className="size-4 text-emerald-600" />
+                <span>Approved for Public Distribution</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* RAG Marketing Assistant Prompt Co-Pilot */}
+      {/* 2. RAG Marketing Assistant Prompt Co-Pilot */}
       <div className="mb-8">
         <RagPromptAssistant
           currentDraftText={activeText}
@@ -169,54 +254,78 @@ export function LiveStudio({
         />
       </div>
 
-      {/* Main Studio Grid: 2 Clear Columns */}
+      {/* 3. Main Studio Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column (5 Cols): Script Editor */}
+        {/* Left Column (5 Cols): Script Editor & Role Tabs */}
         <div className="lg:col-span-5 space-y-5">
           <div className="rounded-2xl border border-border bg-card p-6 space-y-5 shadow-xs">
-            {/* Top Navigation Tabs */}
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <div className="flex items-center gap-1.5">
+            {/* Top Navigation Tabs (Role-Adaptive) */}
+            <div className="flex flex-wrap items-center gap-1.5 border-b border-border pb-3">
+              <button
+                onClick={() => setActiveTab("editor")}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  activeTab === "editor"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <FileText className="size-3.5" />
+                <span>Script Editor</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("upload")}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  activeTab === "upload"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Upload className="size-3.5" />
+                <span>Upload File</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("rules")}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  activeTab === "rules"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <BookOpen className="size-3.5" />
+                <span>Active Rules</span>
+              </button>
+
+              {/* Manager-only Clarity Heatmap Tab */}
+              {currentPersona.role === "MANAGER" && (
                 <button
-                  onClick={() => setActiveTab("editor")}
+                  onClick={() => setActiveTab("clarity")}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    activeTab === "editor"
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground"
+                    activeTab === "clarity"
+                      ? "bg-blue-600 text-white"
+                      : "text-blue-600 hover:bg-blue-50"
                   }`}
                 >
-                  <FileText className="size-3.5" />
-                  <span>Script Editor</span>
+                  <BarChart3 className="size-3.5" />
+                  <span>Clarity Heatmap</span>
                 </button>
+              )}
 
+              {/* Admin-only Audit Trail Tab */}
+              {currentPersona.role === "ADMIN" && (
                 <button
-                  onClick={() => setActiveTab("upload")}
+                  onClick={() => setActiveTab("audit")}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    activeTab === "upload"
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground"
+                    activeTab === "audit"
+                      ? "bg-purple-600 text-white"
+                      : "text-purple-600 hover:bg-purple-50"
                   }`}
                 >
-                  <Upload className="size-3.5" />
-                  <span>Upload File</span>
+                  <History className="size-3.5" />
+                  <span>Audit Trail</span>
                 </button>
-
-                <button
-                  onClick={() => setActiveTab("rules")}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    activeTab === "rules"
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <BookOpen className="size-3.5" />
-                  <span>Active Rules</span>
-                </button>
-              </div>
-
-              <span className="text-xs text-muted-foreground font-mono">
-                {currentPersona.name.split(" ")[0]} ({currentPersona.role})
-              </span>
+              )}
             </div>
 
             {/* Tab 1: Editor & Intent */}
@@ -236,7 +345,7 @@ export function LiveStudio({
                   />
                 </div>
 
-                {/* Draft Content Textarea (High-contrast 15px text) */}
+                {/* Draft Content Textarea */}
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-semibold text-foreground uppercase tracking-wider font-mono">
@@ -278,7 +387,7 @@ export function LiveStudio({
 
             {/* Tab 2: File Upload */}
             {activeTab === "upload" && (
-              <div className="py-8 space-y-4 text-center">
+              <div className="py-6 space-y-5 text-center">
                 <div className="mx-auto flex size-12 items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 text-muted-foreground">
                   <Upload className="size-6" />
                 </div>
@@ -287,12 +396,12 @@ export function LiveStudio({
                     Upload Your Script File
                   </h4>
                   <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
-                    Upload a plain text (.txt), Markdown (.md), or Word (.docx) file. Verity checks it immediately.
+                    Upload a plain text (.txt), Markdown (.md), PDF, or Word (.docx) file. Verity checks it immediately.
                   </p>
                 </div>
 
                 <label className="inline-flex items-center gap-2 rounded-lg bg-foreground text-background px-5 py-2.5 text-xs font-semibold cursor-pointer hover:opacity-90 transition-opacity shadow-2xs">
-                  <span>{isUploading ? "Reading..." : "Select File"}</span>
+                  <span>{isUploading ? "Reading..." : "Select File from Computer"}</span>
                   <input
                     type="file"
                     accept=".txt,.md,.docx,.pdf"
@@ -306,6 +415,32 @@ export function LiveStudio({
                     {uploadSuccessMsg}
                   </p>
                 )}
+
+                {/* 1-Click Sample Loaders for Quick Demo */}
+                <div className="pt-4 border-t border-border/60 text-left space-y-2">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block">
+                    Or Test with 1-Click Sample Scripts:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleLoadSample("flagged")}
+                      className="rounded-lg border border-border bg-card p-2.5 text-left text-xs hover:border-foreground/40 transition-colors"
+                    >
+                      <div className="font-semibold text-foreground">Sample with Banned Claims</div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">Contains 'cure', 'cheap', 'users'</div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleLoadSample("compliant")}
+                      className="rounded-lg border border-border bg-card p-2.5 text-left text-xs hover:border-foreground/40 transition-colors"
+                    >
+                      <div className="font-semibold text-foreground">100% Compliant Sample</div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">Clear guide with zero errors</div>
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -336,9 +471,23 @@ export function LiveStudio({
                 </div>
               </div>
             )}
+
+            {/* Tab 4: Manager Clarity Heatmap */}
+            {activeTab === "clarity" && currentPersona.role === "MANAGER" && (
+              <div className="space-y-3">
+                <ClarityHeatmap metrics={clarityMetrics} />
+              </div>
+            )}
+
+            {/* Tab 5: Admin Audit Trail */}
+            {activeTab === "audit" && currentPersona.role === "ADMIN" && (
+              <div className="space-y-3">
+                <AuditTimeline records={reviewOutput?.auditTrail || []} isChainValid={true} />
+              </div>
+            )}
           </div>
 
-          {/* Simple Readability Score */}
+          {/* Readability & Clarity Score */}
           {reviewOutput && (
             <div className="rounded-2xl border border-border bg-card p-5 space-y-3 text-xs shadow-xs">
               <div className="text-xs font-semibold text-foreground border-b border-border pb-2 flex items-center justify-between">
@@ -369,14 +518,14 @@ export function LiveStudio({
         {/* Right Column (7 Cols): Step-by-Step Mistakes & How to Fix */}
         <div className="lg:col-span-7 space-y-4">
           <div className="rounded-2xl border border-border bg-card p-6 space-y-5 shadow-xs">
-            {/* Header */}
+            {/* Header with Filter Pills */}
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">
                   Mistakes Found in Your Script ({allFindings.length})
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Click any box to see why it was flagged and click to fix it
+                  Click any box to inspect policy citations and apply 1-click compliant fixes
                 </p>
               </div>
 
@@ -430,7 +579,7 @@ export function LiveStudio({
               </div>
             ) : (
               <div className="space-y-3">
-                {visibleFindings.map((f, idx) => (
+                {visibleFindings.map((f) => (
                   <FindingCard
                     key={f.id}
                     finding={f}

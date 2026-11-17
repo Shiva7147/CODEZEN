@@ -56,8 +56,8 @@ export class CitationVerifier {
     }
 
     // Check 2: Does the flagged text exist in the user submission?
-    const normSubmission = normalizeWhitespace(submissionText);
-    const normFlagged = normalizeWhitespace(finding.flaggedText);
+    const normSubmission = normalizeWhitespace(submissionText).toLowerCase();
+    const normFlagged = normalizeWhitespace(finding.flaggedText).toLowerCase();
     const flaggedInSubmission = normSubmission.includes(normFlagged);
 
     if (!flaggedInSubmission) {
