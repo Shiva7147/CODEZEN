@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import mammoth from "mammoth";
+import { PDFParse } from "pdf-parse";
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,23 +25,13 @@ export async function POST(req: NextRequest) {
       const result = await mammoth.extractRawText({ buffer });
       extractedText = result.value || "";
     } else if (lowerName.endsWith(".pdf")) {
-      // Extract printable text chunks from PDF buffer
-      const raw = buffer.toString("binary");
-      const textMatches: string[] = [];
-      
-      // Extract PDF text between stream and endstream, or parentheses/brackets
-      const regex = /\(([^)]+)\)|\[([^\]]+)\]/g;
-      let match;
-      while ((match = regex.exec(raw)) !== null) {
-        const val = (match[1] || match[2] || "").trim();
-        if (val.length > 2 && /[a-zA-Z]/.test(val) && !val.includes("\\")) {
-          textMatches.push(val);
-        }
-      }
-
-      if (textMatches.length > 10) {
-        extractedText = textMatches.join(" ");
-      } else {
+      // Robust PDF extraction via PDFParse
+      try {
+        const parser = new PDFParse({ data: buffer });
+        const parseResult = await parser.getText();
+        extractedText = parseResult?.text || "";
+      } catch (pdfErr) {
+        console.warn("PDFParse load error, attempting buffer fallback:", pdfErr);
         // Fallback: clean ASCII printable characters
         let asciiStr = "";
         for (let i = 0; i < buffer.length; i++) {
@@ -59,11 +50,15 @@ export async function POST(req: NextRequest) {
       extractedText = buffer.toString("utf-8");
     }
 
-    // Clean up whitespace
-    extractedText = extractedText.replace(/\r\n/g, "\n").replace(/[ \t]+/g, " ").trim();
+    // Clean up whitespace & linebreaks
+    extractedText = extractedText
+      .replace(/\r\n/g, "\n")
+      .replace(/\r/g, "\n")
+      .replace(/[ \t]+/g, " ")
+      .trim();
 
     if (!extractedText) {
-      extractedText = `[Uploaded: ${filename}]\nNo readable text could be extracted from this file. Please ensure it is an unencrypted document.`;
+      extractedText = `[Uploaded: ${filename}]\nNo readable text could be extracted from this file. Please ensure it contains selectable text and is not encrypted.`;
     }
 
     const words = extractedText.split(/\s+/).filter(Boolean);
