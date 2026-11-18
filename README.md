@@ -9,7 +9,16 @@
 
 > **Eliminate handoff breakdowns, protect regulatory posture, and verify citations before digital marketing scripts, video reels, and brand copy ever reach the public.**
 
-Developed by **Team OPK** (*Shiva Shankar S, Sanjay V, D V Visvajit Chandran*) for the **Inkloom AI Brand Governance Hackathon Challenge**.
+Developed by **Team OPK** (*Shiva Shankar S, Sanjay V, D V Visvajit Chandran*) for **CodeZen India 2026 — Round 2 (The Build)**.
+
+---
+
+## 🏆 Round 2 Submission Deliverables
+
+- **Working Project Link (No Sign-in Required):** [https://codezen-jet.vercel.app/](https://codezen-jet.vercel.app/)
+- **Source-Code Repository:** [https://github.com/Shiva7147/CODEZEN](https://github.com/Shiva7147/CODEZEN)
+- **Updated Project PDF (Round 2 Submission Document):** [Download Submission PDF](public/Verity_Round2_Project_Submission_Team_OPK.pdf)
+- **Product Demo Video (83s Full Walkthrough):** [Watch Video](public/videos/verity-full-product-walkthrough.mp4)
 
 ---
 
