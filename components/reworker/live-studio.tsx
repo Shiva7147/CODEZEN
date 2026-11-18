@@ -177,6 +177,18 @@ export function LiveStudio({
     onAcceptFinding(findingId);
   };
 
+  // Custom Edit: Updates BOTH state machine AND the text in the script editor!
+  const handleInternalEdit = (findingId: string, replacementText: string, rationale: string) => {
+    const targetFinding = reviewOutput?.findings.find((f) => f.id === findingId);
+    if (targetFinding && replacementText) {
+      const escaped = targetFinding.flaggedText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escaped, "i");
+      const updated = activeText.replace(regex, replacementText);
+      setActiveText(updated);
+    }
+    onEditFinding(findingId, replacementText, rationale);
+  };
+
   // Copy approved script to clipboard
   const handleCopyCleanScript = () => {
     navigator.clipboard.writeText(activeText);
@@ -670,7 +682,7 @@ export function LiveStudio({
                     userRole={currentPersona.role}
                     onAccept={handleInternalAccept}
                     onDispute={onDisputeFinding}
-                    onEdit={onEditFinding}
+                    onEdit={handleInternalEdit}
                     onViewClause={handleOpenClause}
                     defaultExpanded={false}
                   />
@@ -683,8 +695,14 @@ export function LiveStudio({
 
       {/* 4. Publication Approval Modal */}
       {showApprovalModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-xl rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95">
+        <div
+          onClick={() => setShowApprovalModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-xl rounded-2xl border border-border bg-card p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95"
+          >
             <div className="flex items-start justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200">
@@ -701,6 +719,8 @@ export function LiveStudio({
               </div>
 
               <button
+                type="button"
+                aria-label="Close modal"
                 onClick={() => setShowApprovalModal(false)}
                 className="rounded-lg p-1 text-muted-foreground hover:bg-muted"
               >
@@ -720,13 +740,22 @@ export function LiveStudio({
 
             {/* Actions */}
             <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-              <button
-                onClick={handleDownloadAuditCert}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-              >
-                <Download className="size-3.5" />
-                <span>Download Audit Record (.json)</span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowApprovalModal(false)}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                >
+                  <span>Close</span>
+                </button>
+                <button
+                  onClick={handleDownloadAuditCert}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3.5 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                >
+                  <Download className="size-3.5" />
+                  <span>Download Audit Record (.json)</span>
+                </button>
+              </div>
 
               <button
                 onClick={handleCopyCleanScript}

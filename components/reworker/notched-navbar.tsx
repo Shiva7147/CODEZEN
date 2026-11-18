@@ -26,10 +26,10 @@ export function NotchedNavbar({
   const [isPersonaOpen, setIsPersonaOpen] = useState(false);
 
   const quickLinks = [
-    { label: "Studio", href: "#studio" },
-    { label: "Examples", href: "#scenarios" },
-    { label: "How It Works", href: "#method" },
-    { label: "FAQ", href: "#faq" },
+    { label: "Studio", href: "/#studio" },
+    { label: "Examples", href: "/#scenarios" },
+    { label: "How It Works", href: "/#method" },
+    { label: "FAQ", href: "/#faq" },
   ];
 
   return (
@@ -37,7 +37,7 @@ export function NotchedNavbar({
       <div className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
         {/* Left: Brand Identity */}
         <div className="flex items-center gap-6">
-          <a href="#top" className="flex items-center gap-2.5 group">
+          <Link href="/#top" className="flex items-center gap-2.5 group">
             <span className="flex size-8 items-center justify-center rounded-lg bg-foreground text-background">
               <Shield className="size-4" />
             </span>
@@ -49,18 +49,18 @@ export function NotchedNavbar({
                 Script Governance
               </span>
             </div>
-          </a>
+          </Link>
 
           {/* Navigation Links */}
           <nav className="hidden md:flex items-center gap-1 pl-4 border-l border-border">
             {quickLinks.map((item) => (
-              <a
+              <Link
                 key={item.label}
                 href={item.href}
                 className="rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors font-medium"
               >
                 {item.label}
-              </a>
+              </Link>
             ))}
             <Link
               href="/guidelines"
