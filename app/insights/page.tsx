@@ -47,6 +47,22 @@ const INITIAL_BENCHMARK_AUDIT_EVENTS: AuditRecord[] = [
   {
     sequenceIndex: 2,
     timestamp: new Date().toISOString(),
+    submissionId: "sub_seed_2b",
+    actorId: "p_rahul",
+    actorName: "Rahul Sharma",
+    actorRole: "CREATOR",
+    action: "FINDING_ACCEPTED",
+    clauseId: "cl_style_01",
+    clauseCode: "STYLE-1.2",
+    rationale: "Accepted tone adjustment.",
+    previousStatus: "IN_CREATOR_REVIEW",
+    newStatus: "IN_CREATOR_REVIEW",
+    previousHash: "abc222",
+    entryHash: "abc223"
+  },
+  {
+    sequenceIndex: 3,
+    timestamp: new Date().toISOString(),
     submissionId: "sub_seed_3",
     actorId: "p_rahul",
     actorName: "Rahul Sharma",
@@ -56,11 +72,41 @@ const INITIAL_BENCHMARK_AUDIT_EVENTS: AuditRecord[] = [
     clauseCode: "TERM-1.1",
     previousStatus: "IN_CREATOR_REVIEW",
     newStatus: "IN_CREATOR_REVIEW",
-    previousHash: "abc222",
+    previousHash: "abc223",
     entryHash: "abc333"
   },
   {
-    sequenceIndex: 3,
+    sequenceIndex: 4,
+    timestamp: new Date().toISOString(),
+    submissionId: "sub_seed_3b",
+    actorId: "p_rahul",
+    actorName: "Rahul Sharma",
+    actorRole: "CREATOR",
+    action: "FINDING_ACCEPTED",
+    clauseId: "cl_term_01",
+    clauseCode: "TERM-1.1",
+    previousStatus: "IN_CREATOR_REVIEW",
+    newStatus: "IN_CREATOR_REVIEW",
+    previousHash: "abc333",
+    entryHash: "abc334"
+  },
+  {
+    sequenceIndex: 5,
+    timestamp: new Date().toISOString(),
+    submissionId: "sub_seed_3c",
+    actorId: "p_rahul",
+    actorName: "Rahul Sharma",
+    actorRole: "CREATOR",
+    action: "FINDING_ACCEPTED",
+    clauseId: "cl_term_01",
+    clauseCode: "TERM-1.1",
+    previousStatus: "IN_CREATOR_REVIEW",
+    newStatus: "IN_CREATOR_REVIEW",
+    previousHash: "abc334",
+    entryHash: "abc335"
+  },
+  {
+    sequenceIndex: 6,
     timestamp: new Date().toISOString(),
     submissionId: "sub_seed_4",
     actorId: "p_rahul",
@@ -71,11 +117,11 @@ const INITIAL_BENCHMARK_AUDIT_EVENTS: AuditRecord[] = [
     clauseCode: "TERM-4.5",
     previousStatus: "IN_CREATOR_REVIEW",
     newStatus: "IN_CREATOR_REVIEW",
-    previousHash: "abc333",
+    previousHash: "abc335",
     entryHash: "abc444"
   },
   {
-    sequenceIndex: 4,
+    sequenceIndex: 7,
     timestamp: new Date().toISOString(),
     submissionId: "sub_seed_5",
     actorId: "p_rahul",
@@ -88,6 +134,36 @@ const INITIAL_BENCHMARK_AUDIT_EVENTS: AuditRecord[] = [
     newStatus: "IN_CREATOR_REVIEW",
     previousHash: "abc444",
     entryHash: "abc555"
+  },
+  {
+    sequenceIndex: 8,
+    timestamp: new Date().toISOString(),
+    submissionId: "sub_seed_6",
+    actorId: "p_rahul",
+    actorName: "Rahul Sharma",
+    actorRole: "CREATOR",
+    action: "FINDING_ACCEPTED",
+    clauseId: "cl_term_04",
+    clauseCode: "TERM-4.5",
+    previousStatus: "IN_CREATOR_REVIEW",
+    newStatus: "IN_CREATOR_REVIEW",
+    previousHash: "abc555",
+    entryHash: "abc666"
+  },
+  {
+    sequenceIndex: 9,
+    timestamp: new Date().toISOString(),
+    submissionId: "sub_seed_7",
+    actorId: "p_rahul",
+    actorName: "Rahul Sharma",
+    actorRole: "CREATOR",
+    action: "FINDING_ACCEPTED",
+    clauseId: "cl_term_04",
+    clauseCode: "TERM-4.5",
+    previousStatus: "IN_CREATOR_REVIEW",
+    newStatus: "IN_CREATOR_REVIEW",
+    previousHash: "abc666",
+    entryHash: "abc777"
   }
 ];
 
@@ -103,6 +179,7 @@ export default function InsightsPage() {
   const ambiguousCount = metrics.filter((m) => m.clarityVerdict === "AMBIGUOUS_GUIDELINE").length;
   const trainingCount = metrics.filter((m) => m.clarityVerdict === "TRAINING_NEED").length;
   const clearCount = metrics.filter((m) => m.clarityVerdict === "HIGH_CLARITY").length;
+  const notEnoughDataCount = metrics.filter((m) => m.clarityVerdict === "NOT_ENOUGH_DATA").length;
 
   return (
     <OuterFrame>
@@ -117,7 +194,7 @@ export default function InsightsPage() {
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Link
-                href="/"
+                href="/#studio"
                 className="inline-flex items-center gap-1 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="size-3.5" />
@@ -129,49 +206,62 @@ export default function InsightsPage() {
               <span>Guideline Clarity Analytics</span>
             </h1>
             <p className="text-xs text-muted-foreground mt-1.5 font-normal">
-              Resolves Priya's core managerial challenge: distinguishing ambiguous guidelines from team training gaps.
+              Resolves core managerial challenges: distinguishing ambiguous guidelines from team training gaps.
             </p>
           </div>
         </div>
 
-        {/* 3 Summary Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          <div className="rounded-2xl border border-border/70 bg-card p-5 space-y-1.5 shadow-xs">
+        {/* 4 Summary Metric Cards (Matching the table exact counts) */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="rounded-2xl border border-border/70 bg-card p-4 space-y-1 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono uppercase text-muted-foreground">Ambiguous Rules</span>
-              <AlertTriangle className="size-4 text-accent" />
+              <span className="text-[11px] font-mono uppercase text-muted-foreground">Ambiguous Rules</span>
+              <AlertTriangle className="size-3.5 text-accent" />
             </div>
-            <div className="text-3xl font-normal text-foreground tabular-nums">
+            <div className="text-2xl font-normal text-foreground tabular-nums">
               {ambiguousCount}
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              Dispute rate &gt; 20%. Candidate for brand guideline editorial revision.
+            <p className="text-[10px] text-muted-foreground">
+              Dispute rate &gt; 20% with ≥ 3 flags.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-border/70 bg-card p-5 space-y-1.5 shadow-xs">
+          <div className="rounded-2xl border border-border/70 bg-card p-4 space-y-1 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono uppercase text-muted-foreground">Training Needs</span>
-              <GraduationCap className="size-4 text-muted-foreground" />
+              <span className="text-[11px] font-mono uppercase text-muted-foreground">Training Needs</span>
+              <GraduationCap className="size-3.5 text-muted-foreground" />
             </div>
-            <div className="text-3xl font-normal text-foreground tabular-nums">
+            <div className="text-2xl font-normal text-foreground tabular-nums">
               {trainingCount}
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              Frequently violated, low dispute rate. Team onboarding gap.
+            <p className="text-[10px] text-muted-foreground">
+              Frequently violated, low dispute rate.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-border/70 bg-card p-5 space-y-1.5 shadow-xs">
+          <div className="rounded-2xl border border-border/70 bg-card p-4 space-y-1 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono uppercase text-muted-foreground">High Clarity Rules</span>
-              <Check className="size-4 text-foreground" />
+              <span className="text-[11px] font-mono uppercase text-muted-foreground">Clear Rules</span>
+              <Check className="size-3.5 text-foreground" />
             </div>
-            <div className="text-3xl font-normal text-foreground tabular-nums">
+            <div className="text-2xl font-normal text-foreground tabular-nums">
               {clearCount}
             </div>
-            <p className="text-[11px] text-muted-foreground">
-              Clear corporate rules with high author alignment.
+            <p className="text-[10px] text-muted-foreground">
+              High creator alignment with ≥ 3 flags.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-border/70 bg-card p-4 space-y-1 shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono uppercase text-muted-foreground">Not Enough Data</span>
+              <span className="size-2 rounded-full bg-muted-foreground" />
+            </div>
+            <div className="text-2xl font-normal text-foreground tabular-nums">
+              {notEnoughDataCount}
+            </div>
+            <p className="text-[10px] text-muted-foreground">
+              Fewer than 3 flags logged.
             </p>
           </div>
         </div>

@@ -182,7 +182,7 @@ export function downloadComplianceReportPDF(data: {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(22, 101, 52); // Dark green
-    doc.text("No compliance violations detected. Script is 100% compliant with brand & regulatory guidelines.", 20, y + 5);
+    doc.text("No compliance violations detected. Script is aligned with brand & regulatory guidelines.", 20, y + 5);
     y += 16;
   } else {
     data.findings.forEach((finding, idx) => {

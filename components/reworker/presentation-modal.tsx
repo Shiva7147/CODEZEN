@@ -71,20 +71,20 @@ const SLIDES: Slide[] = [
     id: 3,
     badge: "Step 3: Grounded Proof",
     title: "Proving Every Mistake with Real Brand Rules",
-    subtitle: "No AI hallucinations. Every flagged issue shows the exact sentence from the brand rulebook.",
+    subtitle: "Verified against guidelines. Every flagged issue shows the exact sentence from the brand rulebook.",
     icon: <FileCheck className="size-5 text-[#cf4f27]" />,
     content: {
       heading: "Bitap Citation Verification",
       description:
-        "Generic AI tools frequently invent fake rules. Verity runs a mathematical Bitap fuzzy search against the brand's official guideline database. If a rule does not exist, the issue is not shown.",
+        "Generic AI tools can cite inconsistent rules. Verity runs a mathematical Bitap fuzzy search against the brand's official guideline database. If a rule does not exist, the issue is not shown.",
       points: [
         { label: "Real Policy Citations", detail: "Every mistake links to an exact Clause ID (e.g. Clause TERM-1.1)." },
         { label: "1-Click Rule Inspection", detail: "Creators can tap 'Inspect Rule' to read the full policy in plain English." },
-        { label: "Zero Hallucinated Rules", detail: "Mathematically verifies that quotes match official company policy." },
+        { label: "Verified Policy Rules", detail: "Mathematically verifies that quotes match official company policy." },
       ],
       metrics: [
         { value: "100%", label: "Real Guideline Matches" },
-        { value: "0%", label: "Fake or Hallucinated Rules" },
+        { value: "Verified", label: "Grounding in Rules" },
         { value: "1 Click", label: "To Inspect Rule Text" },
       ],
     },
@@ -114,22 +114,22 @@ const SLIDES: Slide[] = [
   {
     id: 5,
     badge: "Step 5: Safe Publication",
-    title: "100% Peace of Mind and Audit History",
-    subtitle: "Every fix and sign-off is logged so creators and brands are protected from fines.",
+    title: "Complete Audit History & Proof",
+    subtitle: "Every fix and sign-off is logged so creators and brands have verified proof.",
     icon: <CheckCircle2 className="size-5 text-[#cf4f27]" />,
     content: {
       heading: "Immutable Compliance Ledger",
       description:
         "Every approved change appends to a tamper-evident audit ledger with timestamps and reviewer signatures. Simultaneously, marketing managers can see which rules creators struggle with most on the Clarity Heatmap.",
       points: [
-        { label: "Proof of Approval", detail: "Full legal proof that your script was verified and approved before filming." },
+        { label: "Proof of Approval", detail: "Full proof that your script was verified and approved before filming." },
         { label: "Clarity Heatmap", detail: "Shows brands which rules are confusing so they can rewrite their guidelines." },
         { label: "Turnkey Influencer Workflow", detail: "Simple, distraction-free interface built for creators in tier-2 and tier-3 cities." },
       ],
       metrics: [
         { value: "SHA-256", label: "Cryptographic Audit Trail" },
         { value: "Real-Time", label: "Rule Clarity Analytics" },
-        { value: "100%", label: "Pre-Publication Safety" },
+        { value: "Verified", label: "Pre-Publication Review" },
       ],
     },
   },

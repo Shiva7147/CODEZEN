@@ -94,19 +94,21 @@ export function ClarityHeatmap({ metrics }: ClarityHeatmapProps) {
                     </span>
                   </td>
                   <td className="py-3 px-3 font-sans">
-                    {isAmbiguous && (
+                    {row.clarityVerdict === "NOT_ENOUGH_DATA" ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground font-mono">
+                        <span>Not enough data</span>
+                      </span>
+                    ) : isAmbiguous ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 border border-accent/30 px-2.5 py-0.5 text-[11px] text-foreground font-medium">
                         <AlertTriangle className="size-3 text-accent" />
-                        <span>Ambiguous Rule</span>
+                        <span>Ambiguous</span>
                       </span>
-                    )}
-                    {isTraining && (
+                    ) : isTraining ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-muted border border-border px-2.5 py-0.5 text-[11px] text-foreground">
                         <GraduationCap className="size-3 text-muted-foreground" />
                         <span>Training Gap</span>
                       </span>
-                    )}
-                    {!isAmbiguous && !isTraining && (
+                    ) : (
                       <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                         <Check className="size-3 text-foreground" />
                         <span>Clear Rule</span>

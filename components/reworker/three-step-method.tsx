@@ -23,7 +23,7 @@ export function ThreeStepMethod() {
     {
       num: "02",
       title: "Instant 1-click compliant rewrites",
-      tagline: "No legal confusion. Get natural-sounding replacements that keep your message engaging and 100% compliant.",
+      tagline: "No legal confusion. Get natural-sounding replacements that keep your message engaging and grounded in brand guidelines.",
       image: "/method-2.jpg",
       imageAlt: "Editorial script review and approved replacements",
       benefitTitle: "What this does for you:",
@@ -35,15 +35,15 @@ export function ThreeStepMethod() {
     },
     {
       num: "03",
-      title: "Safe publication with zero account strikes",
-      tagline: "Automated legal protection and clear team sign-off for creators, brand managers, and legal reviewers.",
+      title: "Safe publication with measured regulatory oversight",
+      tagline: "Clear team sign-off for creators, brand managers, and legal reviewers.",
       image: "/method-3.jpg",
       imageAlt: "Approved script ready for publication",
       benefitTitle: "What this does for you:",
       benefitPoints: [
         "Routine wording fixes are accepted by creators in seconds without back-and-forth email delays.",
         "High-risk claims are automatically quarantined for Legal Reviewer sign-off before content goes live.",
-        "Stores a complete, verified approval record so you can prove compliance if an ad platform ever audits your copy."
+        "Stores a complete, verified approval record so you can verify compliance if an ad platform ever audits your copy."
       ],
     },
   ];
@@ -53,21 +53,21 @@ export function ThreeStepMethod() {
   };
 
   return (
-    <section id="method" className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12 py-16 scroll-mt-20">
+    <section id="method" className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12 py-10 scroll-mt-20">
       {/* Section Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-14">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-normal tracking-tight text-foreground">
-            Three steps, then it mostly gets out of the way
+          <h2 className="text-xl sm:text-2xl font-normal tracking-tight text-foreground">
+            How It Works
           </h2>
         </div>
-        <p className="text-xs sm:text-sm text-muted-foreground max-w-md md:text-right">
-          Write freely. Verity catches unapproved claims and gives you 1-click compliant fixes.
+        <p className="text-xs text-muted-foreground max-w-md md:text-right">
+          Verity checks content against guidelines, highlights exact rules, and sends risky claims to human reviewers.
         </p>
       </div>
 
       {/* 3 Asymmetric Vertical Sections */}
-      <div className="space-y-16">
+      <div className="space-y-8">
         {/* Step 1: Image Left, Text Right */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
           <div className="md:col-span-5 order-2 md:order-1">

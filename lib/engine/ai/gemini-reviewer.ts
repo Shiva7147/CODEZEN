@@ -282,7 +282,7 @@ function runInbuiltSemanticReview(
     findings: dynamicFindings,
     executiveSummary:
       dynamicFindings.length === 0
-        ? "All clauses analyzed: Script is 100% compliant with approved brand guidelines."
+        ? "All clauses analyzed: Script is compliant with approved brand guidelines."
         : `Identified ${dynamicFindings.length} compliance item(s) across tone, health claims, and marketing terminology.`,
     executionTimeMs: Number((performance.now() - startTime).toFixed(2)),
     modelUsed: "verity-semantic-engine-v2",

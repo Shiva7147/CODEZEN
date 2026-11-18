@@ -18,14 +18,14 @@ export function CustomerStories() {
       impact: "Reduced multi-round rewrite cycles by 65%"
     },
     {
-      id: "priya",
-      name: "Priya Nair",
+      id: "manager",
+      name: "Brand Marketing Lead",
       role: "Brand & Content Manager",
       org: "Zenith Consumer Brands",
       focus: "Manager Persona",
       quote:
-        "Visibility was our biggest nightmare. When multiple freelancers and agencies work simultaneously, nobody could track which version was final or who approved what. Verity gave us a centralized audit trail, and the Guideline Clarity dashboard finally answered my question: is a recurring error an employee training gap or an ambiguous guideline?",
-      impact: "100% auditable version history & approval tracking"
+        "Visibility was our biggest challenge. When multiple freelancers and agencies work simultaneously, tracking which version was final or who approved what was difficult. Verity gave us a centralized audit trail, and the Guideline Clarity dashboard finally answered my question: is a recurring error an employee training gap or an ambiguous guideline?",
+      impact: "Auditable version history & approval tracking"
     },
     {
       id: "ananya",

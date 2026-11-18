@@ -27,9 +27,10 @@ export function NotchedNavbar({
 
   const quickLinks = [
     { label: "Studio", href: "/#studio" },
-    { label: "Examples", href: "/#scenarios" },
-    { label: "How It Works", href: "/#method" },
-    { label: "FAQ", href: "/#faq" },
+    { label: "Review Queue", href: "/review" },
+    { label: "History", href: "/history" },
+    { label: "Brand Rules", href: "/guidelines" },
+    { label: "Insights", href: "/insights" },
   ];
 
   return (
@@ -45,8 +46,8 @@ export function NotchedNavbar({
               <span className="text-base font-semibold tracking-tight text-foreground group-hover:text-accent transition-colors">
                 Verity
               </span>
-              <span className="text-[11px] text-muted-foreground -mt-0.5 font-mono">
-                Script Governance
+              <span className="text-[10px] text-muted-foreground -mt-0.5 font-mono">
+                Aegis BioHealth Demo
               </span>
             </div>
           </Link>
@@ -79,15 +80,15 @@ export function NotchedNavbar({
 
         {/* Right: Role Switcher, Presentation Pill, and Studio Button */}
         <div className="flex items-center gap-2.5">
-          {/* 5-Slide Presentation Deck Pill */}
+          {/* 2-minute Guided Demo Deck Pill */}
           {onOpenPresentation && (
             <button
               onClick={onOpenPresentation}
               className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3.5 py-1.5 text-xs text-foreground hover:bg-muted transition-colors shadow-2xs font-medium"
-              title="Open 5-Slide Walkthrough Presentation"
+              title="Open 2-minute Guided Demo"
             >
               <Presentation className="size-3.5 text-accent" />
-              <span>5-Slide Walkthrough</span>
+              <span>2-minute guided demo</span>
             </button>
           )}
 
@@ -108,9 +109,14 @@ export function NotchedNavbar({
             </button>
 
             {isPersonaOpen && (
-              <div className="absolute right-0 mt-2 w-72 rounded-xl border border-border bg-card p-2 shadow-lg z-50">
-                <div className="px-3 py-2 text-[11px] uppercase tracking-wider text-muted-foreground font-semibold border-b border-border">
-                  Switch Active Role
+              <div className="absolute right-0 mt-2 w-80 rounded-xl border border-border bg-card p-2.5 shadow-lg z-50">
+                <div className="px-3 py-2 border-b border-border space-y-1">
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    Switch Active Role
+                  </div>
+                  <div className="text-[11px] text-muted-foreground font-normal leading-tight">
+                    Demo mode: switch roles to see each person's view. No real sign-in.
+                  </div>
                 </div>
                 <div className="py-1 space-y-1">
                   {DEMO_PERSONAS.map((p) => {
@@ -129,7 +135,7 @@ export function NotchedNavbar({
                         }`}
                       >
                         <div>
-                          <div className="font-medium text-foreground">{p.name}</div>
+                          <div className="font-medium text-foreground">{p.name} ({p.role})</div>
                           <div className="text-[11px] text-muted-foreground">{p.title}</div>
                         </div>
                         {isSelected && <Check className="size-3.5 text-foreground" />}

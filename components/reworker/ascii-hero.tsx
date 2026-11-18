@@ -41,7 +41,7 @@ export function AsciiHero({
           {/* Top Pill Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-xs text-white/90 backdrop-blur-md font-mono">
             <span className="size-2 rounded-full bg-[#f27d55]" />
-            <span>Pre-Publication Brand & Video Script Governance</span>
+            <span>Fictional demo company: Aegis BioHealth</span>
           </div>
 
           {/* Main Headline */}
@@ -49,15 +49,12 @@ export function AsciiHero({
             id="hero-title"
             className="text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-white max-w-3xl leading-[1.15]"
           >
-            Check your video scripts before you post.
-            <span className="block text-white/60 font-normal mt-1">
-              Never get an ad rejected or account strike again.
-            </span>
+            Catch unsupported brand claims before they are published.
           </h1>
 
-          {/* Subtitle written in 100% human, plain English */}
+          {/* Subtitle */}
           <p className="max-w-2xl text-base leading-relaxed text-white/80 font-normal">
-            Instant rule scanner for creator captions, reels, and sponsorship copy. Catches unapproved claims, locks legal liabilities, and gives you 1-click compliant fixes.
+            Verity checks content against your approved guidelines, shows the exact rule behind every finding, and sends risky claims to the right human reviewer.
           </p>
 
           {/* Action Buttons */}
@@ -76,7 +73,7 @@ export function AsciiHero({
                 className="inline-flex h-12 items-center gap-2 rounded-lg border border-white/25 bg-white/10 px-5 text-sm font-medium text-white backdrop-blur-md hover:bg-white/20 transition-colors"
               >
                 <Presentation className="size-4 text-[#f27d55]" />
-                <span>See 5-Slide Walkthrough</span>
+                <span>2-minute guided demo</span>
               </button>
             )}
 
@@ -89,8 +86,13 @@ export function AsciiHero({
           </div>
 
           {/* One-Click Role Switcher inside Hero */}
-          <div className="pt-4 border-t border-white/15 flex flex-wrap items-center gap-3 text-xs">
-            <span className="text-white/60 font-mono">Switch Active Role:</span>
+          <div className="pt-4 border-t border-white/15 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="text-white/60 font-mono">Switch Active Role:</span>
+              <span className="text-white/40 text-[11px] font-mono">
+                Demo mode: switch roles to see each person's view. No real sign-in.
+              </span>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               {DEMO_PERSONAS.map((p) => {
                 const isActive = p.id === currentPersona.id;

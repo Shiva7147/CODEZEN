@@ -18,7 +18,7 @@ export function FooterWordmark({ onScrollToStudio }: FooterWordmarkProps) {
           <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-white/80 font-mono">
             <span className="size-1.5 rounded-full bg-accent" />
             <span className="text-[11px] uppercase tracking-wider">
-              Zero Unverified Claims
+              Verified Source Governance
             </span>
           </div>
 
@@ -47,11 +47,11 @@ export function FooterWordmark({ onScrollToStudio }: FooterWordmarkProps) {
       <div className="border-t border-border/40 pt-10 space-y-8">
         <div className="flex flex-wrap items-center justify-between gap-4 text-xs font-mono text-muted-foreground">
           <div>
-            <span className="text-foreground font-medium">Verity</span> · Team OPK (Shiva Shankar S, Sanjay V, D V Visvajit Chandran)
+            <span className="text-foreground font-medium">Verity · Team OPK · Round 2</span> (Shiva Shankar S, Sanjay V, D V Visvajit Chandran)
           </div>
 
           <div>
-            Problem Statement by <span className="text-foreground font-medium">Inkloom AI</span> · Round 1 Submission
+            Problem Statement by <span className="text-foreground font-medium">Inkloom AI</span> · Round 2
           </div>
         </div>
 

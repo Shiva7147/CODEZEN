@@ -11,7 +11,7 @@ export interface ClauseClarityMetric {
   timesDisputed: number;
   timesEdited: number;
   disputeRate: number; // 0% - 100%
-  clarityVerdict: "HIGH_CLARITY" | "MODERATE" | "AMBIGUOUS_GUIDELINE" | "TRAINING_NEED";
+  clarityVerdict: "HIGH_CLARITY" | "MODERATE" | "AMBIGUOUS_GUIDELINE" | "TRAINING_NEED" | "NOT_ENOUGH_DATA";
   recommendation: string;
 }
 
@@ -61,15 +61,20 @@ export function computeGuidelineClarityMetrics(
     let clarityVerdict: ClauseClarityMetric["clarityVerdict"] = "HIGH_CLARITY";
     let recommendation = "Guideline is clearly understood and consistently adopted.";
 
-    if (totalEvents >= 3 && disputeRate >= 25) {
+    // Rule: Fewer than 3 flags -> Not enough data
+    if (totalEvents < 3) {
+      clarityVerdict = "NOT_ENOUGH_DATA";
+      recommendation = "Fewer than 3 total flags. Insufficient statistical sample to determine rule clarity.";
+    } else if (disputeRate > 20) {
+      // Rule: Ambiguous only for dispute rate above 20% with at least 3 flags
       clarityVerdict = "AMBIGUOUS_GUIDELINE";
       recommendation = "High creator dispute rate indicates ambiguity. Recommend legal/brand committee redraft of this clause.";
-    } else if (totalEvents >= 5 && disputeRate < 10 && stat.accepted >= 4) {
+    } else if (totalEvents >= 4 && disputeRate <= 10 && stat.accepted >= 3) {
       clarityVerdict = "TRAINING_NEED";
       recommendation = "Low dispute rate with frequent recurring errors indicates team training needed rather than policy rewrite.";
-    } else if (disputeRate > 10) {
-      clarityVerdict = "MODERATE";
-      recommendation = "Monitor dispute frequency; provide explanatory examples in brand training handbook.";
+    } else {
+      clarityVerdict = "HIGH_CLARITY";
+      recommendation = "Guideline is clearly understood and consistently adopted.";
     }
 
     return {

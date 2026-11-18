@@ -93,17 +93,20 @@ export function FindingCard({
         className="w-full flex items-center justify-between p-3.5 sm:p-4 text-left hover:bg-muted/30 transition-colors cursor-pointer group"
         aria-expanded={isExpanded}
       >
-        <div className="flex items-center gap-3 min-w-0">
-          {/* Badge */}
-          {isSensitive ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[#cf4f27]/30 bg-[#cf4f27]/10 px-2.5 py-0.5 text-[11px] font-medium text-[#cf4f27] shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          {/* Badge: Clause Verification */}
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 text-[11px] font-mono font-medium text-foreground shrink-0">
+            {finding.confidence === "low_confidence" ? (
+              <span className="text-amber-700">Low confidence</span>
+            ) : (
+              <span>Verified against {finding.clauseCode || "Guideline"}</span>
+            )}
+          </span>
+
+          {isSensitive && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-[#cf4f27]/30 bg-[#cf4f27]/10 px-2 py-0.5 text-[10px] font-medium text-[#cf4f27] shrink-0 font-mono">
               <ShieldAlert className="size-3" />
-              <span>{categoryLabel}</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-0.5 text-[11px] font-medium text-foreground shrink-0">
-              <span className="size-1.5 rounded-full bg-foreground" />
-              <span>{categoryLabel}</span>
+              <span>Sensitive Hold</span>
             </span>
           )}
 
@@ -138,11 +141,21 @@ export function FindingCard({
         <div className="border-t border-border p-4 sm:p-5 space-y-4 bg-muted/10 animate-in fade-in duration-150">
           {/* Why it was flagged */}
           <div className="space-y-1">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground block font-semibold">
               Why this was flagged:
             </span>
             <p className="text-xs sm:text-sm text-foreground leading-relaxed">
               {finding.explanation}
+            </p>
+          </div>
+
+          {/* Quoted Approved Source Clause */}
+          <div className="rounded-lg border border-border/80 bg-muted/40 p-3 space-y-1 text-xs">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground block font-semibold">
+              Approved Guideline Clause ({finding.clauseCode}):
+            </span>
+            <p className="text-xs text-muted-foreground italic leading-relaxed">
+              "{finding.exactQuote || "Approved source guideline clause requirement."}"
             </p>
           </div>
 
@@ -254,14 +267,16 @@ export function FindingCard({
                 <>
                   <button
                     onClick={() => setIsEditing(!isEditing)}
-                    className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:bg-muted font-medium"
+                    disabled={isLockedForCreator}
+                    className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:bg-muted font-medium disabled:opacity-40"
                   >
                     Custom Edit
                   </button>
 
                   <button
                     onClick={() => setIsDisputing(!isDisputing)}
-                    className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground font-medium"
+                    disabled={isLockedForCreator}
+                    className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground font-medium disabled:opacity-40"
                   >
                     Dispute
                   </button>
