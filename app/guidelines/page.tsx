@@ -2,17 +2,16 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { OuterFrame } from "@/components/reworker/outer-frame";
-import { NotchedNavbar } from "@/components/reworker/notched-navbar";
+import { AppLayout } from "@/components/layout/app-layout";
 import { DEMO_PERSONAS, Persona } from "@/components/navigation/top-nav";
 import { AEGIS_BRAND_GUIDELINE_CLAUSES } from "@/lib/data/sample-brand-guidelines";
 import { StoredClause } from "@/lib/engine/verification/citation-verifier";
 import { ClauseDrawer } from "@/components/review/clause-drawer";
+import { PersonaStore } from "@/lib/workflow/persona-store";
 import { BookOpen, Upload, Search, ArrowLeft } from "lucide-react";
 
 export default function GuidelinesPage() {
-  const [currentPersona, setCurrentPersona] = useState<Persona>(DEMO_PERSONAS[3]); // Admin by default
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [currentPersona, setCurrentPersona] = useState<Persona>(() => PersonaStore.getActivePersona());
   const [clauses, setClauses] = useState<StoredClause[]>(AEGIS_BRAND_GUIDELINE_CLAUSES);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeClause, setActiveClause] = useState<StoredClause | null>(null);
@@ -31,17 +30,12 @@ export default function GuidelinesPage() {
   };
 
   return (
-    <OuterFrame>
-      <NotchedNavbar
-        currentPersona={currentPersona}
-        onSelectPersona={setCurrentPersona}
-      />
-
-      <main className="mx-auto max-w-5xl px-4 pt-28 pb-20 space-y-8">
-        {/* Header & Source Ingestion Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/40 pb-6">
+    <AppLayout activePersona={currentPersona} onSelectPersona={setCurrentPersona}>
+      <div className="space-y-6 max-w-6xl mx-auto">
+        {/* Header Breadcrumb & Actions */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
           <div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1">
               <Link
                 href="/"
                 className="inline-flex items-center gap-1 text-xs font-mono text-muted-foreground hover:text-foreground transition-colors"
@@ -50,26 +44,31 @@ export default function GuidelinesPage() {
                 <span>Back to Studio</span>
               </Link>
             </div>
-            <h1 className="text-2xl font-normal tracking-tight text-foreground flex items-center gap-2.5">
-              <BookOpen className="size-5 text-muted-foreground" />
-              <span>Approved Brand Guideline Library</span>
-            </h1>
-            <p className="text-xs text-muted-foreground mt-1.5 font-normal">
-              Authoritative source clauses, citable facts, and restricted compliance assets.
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground flex items-center gap-2">
+                <BookOpen className="size-5 text-muted-foreground" />
+                <span>Brand Rules</span>
+              </h1>
+              <span className="rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-mono font-medium text-foreground">
+                {clauses.length} Rules Active
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Fictional demo company: Aegis BioHealth. Authoritative source clauses, citable claims, and restricted compliance assets.
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 rounded-full bg-foreground text-background hover:opacity-90 px-4 py-2 text-xs font-medium cursor-pointer transition-colors shadow-xs">
+          <div className="flex items-center gap-2">
+            <label className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card hover:bg-muted px-3 py-1.5 text-xs font-medium text-foreground cursor-pointer transition-colors shadow-2xs">
               <Upload className="size-3.5" />
-              <span>Upload Guidelines (PDF / DOCX)</span>
+              <span>Ingest Guidelines (PDF / DOCX)</span>
               <input
                 type="file"
                 accept=".docx,.pdf,.txt"
                 className="hidden"
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
-                    alert(`Successfully ingested "${e.target.files[0].name}" into citable clauses.`);
+                    alert(`Successfully ingested "${e.target.files[0].name}" into citable brand rules.`);
                   }
                 }}
               />
@@ -78,27 +77,27 @@ export default function GuidelinesPage() {
         </div>
 
         {/* Search Bar */}
-        <div className="flex items-center gap-3 rounded-full border border-border/70 bg-card px-4 py-2.5 text-xs shadow-xs">
-          <Search className="size-4 text-muted-foreground" />
+        <div className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-3.5 py-2 text-xs shadow-xs">
+          <Search className="size-3.5 text-muted-foreground" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search guidelines by clause code, keyword, or section..."
+            placeholder="Search brand rules by clause code (e.g. TERM-1.1), title, or keyword..."
             className="w-full bg-transparent text-foreground placeholder-muted-foreground focus:outline-none"
           />
         </div>
 
         {/* Clauses Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredClauses.map((clause) => (
             <div
               key={clause.id}
               onClick={() => handleOpenClause(clause)}
-              className="rounded-2xl border border-border/70 bg-card p-5 space-y-3 cursor-pointer hover:border-border transition-colors shadow-xs group"
+              className="rounded-2xl border border-border bg-card p-4 space-y-2.5 cursor-pointer hover:border-foreground/30 transition-colors shadow-xs group"
             >
-              <div className="flex items-center justify-between border-b border-border/40 pb-2.5">
-                <span className="font-mono text-xs font-medium text-foreground group-hover:text-accent transition-colors">
+              <div className="flex items-center justify-between border-b border-border pb-2">
+                <span className="font-mono text-xs font-semibold text-foreground group-hover:text-[#cf4f27] transition-colors">
                   {clause.clauseCode}
                 </span>
                 <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-mono text-muted-foreground">
@@ -107,28 +106,28 @@ export default function GuidelinesPage() {
               </div>
 
               <div>
-                <div className="text-xs font-medium text-foreground line-clamp-1">
+                <div className="text-xs font-semibold text-foreground line-clamp-1">
                   {clause.sectionHeading}
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground line-clamp-3 leading-relaxed font-mono">
+                <p className="mt-1 text-xs text-muted-foreground line-clamp-3 leading-relaxed">
                   {clause.clauseText}
                 </p>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-border/40 text-[11px] font-mono text-muted-foreground">
-                <span className="capitalize">{clause.category ? clause.category.replace("_", " ") : "Public Guideline"}</span>
-                <span className="size-1.5 rounded-full bg-foreground" />
+              <div className="flex items-center justify-between pt-2 border-t border-border text-[10px] font-mono text-muted-foreground">
+                <span className="capitalize">{clause.category ? clause.category.replace("_", " ") : "Policy Rule"}</span>
+                <span>Click to view details</span>
               </div>
             </div>
           ))}
         </div>
-      </main>
+      </div>
 
       <ClauseDrawer
         clause={activeClause}
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
       />
-    </OuterFrame>
+    </AppLayout>
   );
 }

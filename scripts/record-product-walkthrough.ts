@@ -28,78 +28,56 @@ async function main() {
   await page.goto("http://localhost:3000", { waitUntil: "networkidle" });
   await page.waitForTimeout(2000);
 
-  // 1. Showcase Hero & New Copy
-  console.log("1. Showcasing Hero...");
-  await page.waitForTimeout(2000);
+  // 1. Showcase Top Bar & Welcome Modal
+  console.log("1. Checking Welcome Guide modal...");
+  await page.waitForTimeout(1500);
 
-  // 2. Open 2-Minute Guided Demo (Slides 1 to 5)
-  console.log("2. Opening 2-minute Guided Demo presentation...");
-  const demoBtn = page.locator('button:has-text("2-minute guided demo")').first();
-  if (await demoBtn.isVisible()) {
-    await demoBtn.click();
-    await page.waitForTimeout(2500);
-
-    // Slide 2
-    console.log(" - Advancing to Slide 2...");
-    await page.keyboard.press("ArrowRight");
-    await page.waitForTimeout(2500);
-
-    // Slide 3
-    console.log(" - Advancing to Slide 3...");
-    await page.keyboard.press("ArrowRight");
-    await page.waitForTimeout(2500);
-
-    // Slide 4
-    console.log(" - Advancing to Slide 4...");
-    await page.keyboard.press("ArrowRight");
-    await page.waitForTimeout(2500);
-
-    // Slide 5
-    console.log(" - Advancing to Slide 5...");
-    await page.keyboard.press("ArrowRight");
+  const startDemoBtn = page.locator('button:has-text("Start the 2-minute demo")').first();
+  if (await startDemoBtn.isVisible()) {
+    console.log(" - Welcome Modal is open. Showcasing the 3 core parts...");
     await page.waitForTimeout(3000);
-
-    // Close Modal
-    console.log(" - Closing Guided Demo...");
-    await page.keyboard.press("Escape");
+    console.log(" - Clicking 'Start the 2-minute demo'...");
+    await startDemoBtn.click();
     await page.waitForTimeout(1500);
+  } else {
+    // If not open, click Guide button
+    const guideBtn = page.locator('button:has-text("Guide")').first();
+    if (await guideBtn.isVisible()) {
+      await guideBtn.click();
+      await page.waitForTimeout(2500);
+      const btn = page.locator('button:has-text("Start the 2-minute demo")').first();
+      if (await btn.isVisible()) {
+        await btn.click();
+        await page.waitForTimeout(1500);
+      }
+    }
   }
 
-  // 3. Showcase 4-Step "Start Here" Guide
-  console.log("3. Scrolling to 4-Step Start Here Panel...");
-  await page.evaluate(() => {
-    window.scrollBy({ top: 380, behavior: "smooth" });
-  });
-  await page.waitForTimeout(2500);
-
-  // 4. Showcase Studio & Check Script for Mistakes
-  console.log("4. Scrolling to Studio...");
-  await page.evaluate(() => {
-    document.getElementById("studio")?.scrollIntoView({ behavior: "smooth" });
-  });
+  // 3. Showcase 4-Step Stepper & Sample Draft Selector
+  console.log("3. Inspecting 4-Step Stepper...");
   await page.waitForTimeout(2000);
 
-  // Click Check My Script
-  console.log(" - Clicking 'Check My Script for Mistakes'...");
+  // 4. Click Check My Script for Mistakes (Step 1)
+  console.log("4. Clicking 'Check My Script for Mistakes' (Step 1)...");
   const checkBtn = page.locator('button:has-text("Check My Script for Mistakes")').first();
   if (await checkBtn.isVisible()) {
     await checkBtn.click();
     await page.waitForTimeout(3000);
   }
 
-  // 5. Expand and Accept 1-Click Fixes
+  // 5. Expand Finding and Accept Fix (Step 2)
   console.log("5. Expanding finding for 'cheap'...");
   const cheapFinding = page.locator('button:has-text("cheap")').first();
   if (await cheapFinding.isVisible()) {
     await cheapFinding.click();
     await page.waitForTimeout(2000);
 
-    // Click Accept 1-Click Fix
-    const acceptFixBtn = page.locator('button:has-text("Accept 1-Click Fix")').first();
-    if (await acceptFixBtn.isVisible() && await acceptFixBtn.isEnabled()) {
-      console.log(" - Accepting 1-click replacement ('cheap' -> 'cost-effective')...");
+    // Click Accept Proposed Fix
+    const acceptFixBtn = page.locator('button:has-text("Accept Proposed Fix"), button:has-text("Accept 1-Click Fix")').first();
+    if (await acceptFixBtn.isVisible()) {
+      console.log(" - Accepting proposed fix ('cheap' -> 'cost-effective')...");
       await acceptFixBtn.click();
-      await page.waitForTimeout(2500);
+      await page.waitForTimeout(2000);
     }
   }
 
@@ -110,15 +88,15 @@ async function main() {
     await miracleFinding.click();
     await page.waitForTimeout(2000);
 
-    const acceptMiracleBtn = page.locator('button:has-text("Accept 1-Click Fix")').first();
-    if (await acceptMiracleBtn.isVisible() && await acceptMiracleBtn.isEnabled()) {
-      console.log(" - Accepting 1-click replacement ('miracle' -> 'scientifically backed')...");
+    const acceptMiracleBtn = page.locator('button:has-text("Accept Proposed Fix"), button:has-text("Accept 1-Click Fix")').first();
+    if (await acceptMiracleBtn.isVisible()) {
+      console.log(" - Accepting proposed fix ('miracle' -> 'scientifically backed')...");
       await acceptMiracleBtn.click();
-      await page.waitForTimeout(2500);
+      await page.waitForTimeout(2000);
     }
   }
 
-  // Expand sensitive claim
+  // Inspect Sensitive Hold Finding
   console.log(" - Inspecting sensitive claim ('cure chronic fatigue')...");
   const sensitiveFinding = page.locator('button:has-text("cure")').first();
   if (await sensitiveFinding.isVisible()) {
@@ -143,124 +121,140 @@ async function main() {
     }
   }
 
-  // Return to Editor tab
-  const editorTab = page.locator('button:has-text("Script Editor")').first();
-  if (await editorTab.isVisible()) {
-    await editorTab.click();
+  // Return to Write/Paste tab
+  const writeTab = page.locator('button:has-text("Write or Paste")').first();
+  if (await writeTab.isVisible()) {
+    await writeTab.click();
     await page.waitForTimeout(1500);
   }
 
-  // 7. Navigate to Review Queue (/review)
-  console.log("7. Navigating to Review Queue (/review)...");
-  await page.click('nav a:has-text("Review Queue")');
+  // 7. Navigate via Sidebar to Review Queue (/review) (Step 3)
+  console.log("7. Navigating via Sidebar to Review Queue (/review)...");
+  await page.click('aside a:has-text("Review Queue"), a:has-text("Review Queue")');
   await page.waitForURL("**/review", { timeout: 10000 });
   await page.waitForTimeout(2500);
 
-  // Switch to Ananya (Reviewer) if on creator
-  const roleBtn = page.locator('button:has-text("Switch Active Role"), button:has-text("Rahul"), button:has-text("Ananya")').first();
+  // If Creator lockout is shown, switch role
+  const switchReviewerBtn = page.locator('button:has-text("Switch to Ananya (Reviewer)")').first();
+  if (await switchReviewerBtn.isVisible()) {
+    await switchReviewerBtn.click();
+    await page.waitForTimeout(2000);
+  }
+
+  // Select first pending submission in Review Queue
   console.log(" - Opening submission details in Review Queue...");
   const pendingSub = page.locator('button:has-text("Q3 Vitality Blend")').first();
   if (await pendingSub.isVisible()) {
     await pendingSub.click();
-    await page.waitForTimeout(2500);
-
-    // Scroll down to review findings and comments
-    await page.evaluate(() => window.scrollBy({ top: 350, behavior: "smooth" }));
     await page.waitForTimeout(2000);
 
     // Add a comment
     console.log(" - Posting reviewer note in submission thread...");
-    const commentBox = page.locator('input[placeholder*="Add note"]');
+    const commentBox = page.locator('input[placeholder*="comment"], input[placeholder*="note"]').first();
     if (await commentBox.isVisible()) {
       await commentBox.fill("Reviewer verified: clinical documentation on file. Approved for publishing.");
-      await page.locator('button:has-text("Post Note")').click();
+      await page.locator('button:has-text("Post")').first().click();
       await page.waitForTimeout(2000);
     }
 
-    // Click Approve
+    // Click Approve Submission
     console.log(" - Granting legal approval with mandatory justification...");
-    const approveBtn = page.locator('button:has-text("Approve")').first();
+    const approveBtn = page.locator('button:has-text("Approve Submission")').first();
     if (await approveBtn.isVisible()) {
       await approveBtn.click();
       await page.waitForTimeout(1500);
 
-      const reasonBox = page.locator('textarea[placeholder*="Enter justification"]');
+      const reasonBox = page.locator('textarea[placeholder*="regulatory"], textarea[placeholder*="justification"]').first();
       if (await reasonBox.isVisible()) {
-        await reasonBox.fill("Approved: verified against SEC and FTC health claim safe harbor guidelines.");
+        await reasonBox.fill("Approved: verified against corporate health claim safe harbor guidelines.");
         await page.waitForTimeout(1000);
-        await page.locator('button:has-text("Confirm Approval")').click();
+        await page.locator('button:has-text("Confirm & Log Decision"), button:has-text("Confirm")').first().click();
         await page.waitForTimeout(2500);
       }
     }
   }
 
-  // 8. Navigate to Immutable History (/history)
-  console.log("8. Navigating to Immutable History (/history)...");
-  await page.click('nav a:has-text("History")');
+  // 8. Navigate via Sidebar to History (/history) (Step 4)
+  console.log("8. Navigating via Sidebar to History (/history)...");
+  await page.click('aside a:has-text("History"), a:has-text("History")');
   await page.waitForURL("**/history", { timeout: 10000 });
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(2500);
 
-  // Filter actions
-  console.log(" - Filtering by 'Approved'...");
+  // Filter by Approved
+  console.log(" - Filtering History by 'Approved'...");
   const approvedFilter = page.locator('button:has-text("Approved")').first();
   if (await approvedFilter.isVisible()) {
     await approvedFilter.click();
     await page.waitForTimeout(2000);
   }
 
-  console.log(" - Filtering by 'Accepted Fix'...");
+  // Filter by Accepted Fix
+  console.log(" - Filtering History by 'Accepted Fix'...");
   const fixFilter = page.locator('button:has-text("Accepted Fix")').first();
   if (await fixFilter.isVisible()) {
     await fixFilter.click();
     await page.waitForTimeout(2000);
   }
 
-  const allFilter = page.locator('button:has-text("All Actions")').first();
-  if (await allFilter.isVisible()) {
-    await allFilter.click();
-    await page.waitForTimeout(2000);
-  }
-
-  // 9. Navigate to Clarity Insights (/insights)
-  console.log("9. Navigating to Guideline Clarity Analytics (/insights)...");
-  await page.click('nav a:has-text("Insights")');
+  // 9. Navigate via Sidebar to Insights (/insights) (Step 4)
+  console.log("9. Navigating via Sidebar to Insights (/insights)...");
+  await page.click('aside a:has-text("Insights"), a:has-text("Insights")');
   await page.waitForURL("**/insights", { timeout: 10000 });
+  await page.waitForTimeout(2500);
+
+  // 10. Navigate via Sidebar to Brand Rules (/guidelines)
+  console.log("10. Navigating via Sidebar to Brand Rules (/guidelines)...");
+  await page.click('aside a:has-text("Brand Rules"), a:has-text("Brand Rules")');
+  await page.waitForURL("**/guidelines", { timeout: 10000 });
+  await page.waitForTimeout(2500);
+
+  // Return to Studio
+  console.log("11. Returning to Studio...");
+  await page.click('aside a:has-text("Studio"), a:has-text("Studio")');
+  await page.waitForURL("**/", { timeout: 10000 });
   await page.waitForTimeout(3000);
 
-  // Scroll down heatmap table
-  await page.evaluate(() => window.scrollBy({ top: 350, behavior: "smooth" }));
-  await page.waitForTimeout(3000);
-
-  // 10. Return to Home
-  console.log("10. Returning to Home...");
-  await page.click('a:has-text("Back to Studio")');
-  await page.waitForURL("http://localhost:3000/**", { timeout: 10000 });
-  await page.waitForTimeout(3000);
-
-  // Close context to finish video
-  console.log("Closing browser and finalizing video recording...");
-  await page.close();
+  console.log("Closing browser and saving recording...");
   await context.close();
   await browser.close();
 
-  // Find the generated video file
-  const videoFiles = fs.readdirSync(outputDir).filter(f => f.endsWith(".webm"));
-  if (videoFiles.length > 0) {
-    const latestWebm = path.join(outputDir, videoFiles[videoFiles.length - 1]);
+  // Find the generated webm video
+  const files = fs.readdirSync(outputDir).filter((f) => f.endsWith(".webm"));
+  if (files.length > 0) {
+    // Sort by latest mtime
+    const sorted = files.map((f) => ({
+      name: f,
+      time: fs.statSync(path.join(outputDir, f)).mtime.getTime(),
+    })).sort((a, b) => b.time - a.time);
+
+    const latestWebm = path.join(outputDir, sorted[0].name);
     const finalMp4 = path.join(outputDir, "verity-full-product-walkthrough.mp4");
-    console.log(`Converting ${latestWebm} to ${finalMp4} using ffmpeg...`);
+    const artifactMp4 = path.resolve(
+      "C:\\Users\\Shiva\\.gemini\\antigravity\\brain\\1c36aadb-6651-457e-a85f-9e1c1fdca50a",
+      "verity-full-product-walkthrough.mp4"
+    );
+
+    console.log(`Converting ${latestWebm} to MP4 using FFmpeg...`);
+    const ffmpegPath = "D:\\bin\\ffmpeg.exe";
+
     try {
-      execSync(`ffmpeg -y -i "${latestWebm}" -c:v libx264 -pix_fmt yuv420p -preset fast -crf 22 "${finalMp4}"`, { stdio: "inherit" });
-      console.log(`Video recording ready at: ${finalMp4}`);
-    } catch (e) {
-      console.warn("FFmpeg conversion fallback:", e);
+      execSync(`"${ffmpegPath}" -y -i "${latestWebm}" -c:v libx264 -pix_fmt yuv420p -crf 22 -preset medium "${finalMp4}"`, {
+        stdio: "inherit",
+      });
+      console.log(`MP4 successfully saved at: ${finalMp4}`);
+
+      // Copy to artifact directory
+      fs.copyFileSync(finalMp4, artifactMp4);
+      console.log(`MP4 successfully copied to artifact: ${artifactMp4}`);
+    } catch (e: any) {
+      console.error("FFmpeg conversion failed:", e.message);
     }
   }
 
-  console.log("Video recording successfully completed!");
+  console.log("Walkthrough recording complete!");
 }
 
 main().catch((err) => {
-  console.error("Recording error:", err);
+  console.error("Error running walkthrough recording:", err);
   process.exit(1);
 });

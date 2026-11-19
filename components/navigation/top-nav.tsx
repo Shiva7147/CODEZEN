@@ -18,15 +18,8 @@ export const DEMO_PERSONAS: Persona[] = [
     id: "p_rahul",
     name: "Rahul Sharma",
     role: "CREATOR",
-    title: "Agency Digital Creator",
+    title: "Digital Content Creator",
     avatarInitials: "RS"
-  },
-  {
-    id: "p_priya",
-    name: "Priya Nair",
-    role: "MANAGER",
-    title: "Brand & Content Manager",
-    avatarInitials: "PN"
   },
   {
     id: "p_ananya",
@@ -34,6 +27,13 @@ export const DEMO_PERSONAS: Persona[] = [
     role: "REVIEWER",
     title: "Compliance & Legal Reviewer",
     avatarInitials: "AS"
+  },
+  {
+    id: "p_alex",
+    name: "Alex Morgan",
+    role: "MANAGER",
+    title: "Brand & Content Manager",
+    avatarInitials: "AM"
   },
   {
     id: "p_admin",
